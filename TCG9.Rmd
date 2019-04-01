@@ -1,0 +1,59 @@
+---
+title: "TCG9"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(rvest)
+#Scraping Html from website
+Rialto_cinemas<-read_html("https://www.imdb.com/showtimes/?ref_=nv_tp_sh_3")
+Rialto_cinemas
+?html_nodes
+
+#using selector gadget to figure out input for html_nodes,
+title<-Rialto_cinemas%>%html_nodes("#cinemas-at-list span a")%>%html_text()
+title
+  
+Duration<-Rialto_cinemas%>%html_nodes("time")%>%html_text()
+Duration1<-gsub("[a-zA-Z ]", "", Duration)
+Duration1<-as.numeric(Duration1)
+
+User_Rating<-Rialto_cinemas%>%html_nodes(".nobr:nth-child(1) strong")%>%html_text()
+User_Rating<-as.numeric(User_Rating)
+
+Movies_in_Rialto<-data.frame(title,Duration1,User_Rating)
+Movies_in_Rialto
+
+
+library(ggplot2)
+
+y<-Movies_in_Rialto$User_Rating
+x<-Movies_in_Rialto$Duration1
+
+n<-length(y)
+
+data<-lm(Movies_in_Rialto$User_Rating ~ Movies_in_Rialto$Duration1)
+
+summary(data)
+
+residuals_Movies_in_Rialto<-resid(data)
+
+predict_Movies_in_Rialto<-predict(data)
+
+max(abs(residuals_Movies_in_Rialto-(y-predict_Movies_in_Rialto)))
+
+sum(residuals_Movies_in_Rialto)
+
+sum(residuals_Movies_in_Rialto * x)
+
+ggplot(Movies_in_Rialto, aes(x=Duration1, y=residuals_Movies_in_Rialto) ) +
+geom_segment(aes(xend=Duration1,yend=0), alpha=.2)+ 
+  geom_hline(yintercept = 0)+
+  geom_point(aes(color=residuals_Movies_in_Rialto),size=Duration1/50)+
+  scale_color_gradient2(low="red", mid="green", high="blue")
+
+```
